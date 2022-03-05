@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import numpy as np
 
 import _init_paths
 
@@ -25,7 +26,7 @@ def iou(boxA,boxB):
     yB = min(boxA[3], boxB[3])
 
     # compute the area of intersection rectangle
-    interArea = abs(max((xB - xA, 0)) * max((yB - yA), 0))
+    interArea = abs(max(xB - xA, 0) * max(yB - yA, 0))
     if interArea == 0:
         return 0
     # compute the area of both the prediction and ground-truth
@@ -92,46 +93,68 @@ def demo(opt):
       dic_out = {x:y for x,y in ret['results'].items() if y.any()}
       #print(dic_out)
       #Removing the predicted scores<0.5 classes - ret is a value sorted dictionary so, y[0] has the largest prediction score object of the class
-      new_ret = {x:y for x,y in dic_out.items() if y[0][4]>0.5}
-      print(new_ret)
+      new_ret = {x:y for x,y in dic_out.items() if y[0][4]>0.4}
+      
+      for k,s in new_ret.items():
+        indx=[]
+        for j in range(len(s)):
+          if s[j][-1]<0.5:
+            indx.append(j)
+        s=np.delete(s,indx,axis=0)
+
+        new_ret[k]=s
+
+      #print(new_ret)
       count=0
       my_dict={}
       for i in new_ret.items():
         #print(i[0])
         for j in i[1]:
-          if(j[4]>0.6):
+          if(j[4]>0.4):
+            #print(j[4])
             count+=1
+          #else:
+           # new_ret = np.delete(new_ret, 1,axis=0)
         #print("count",count)  
-        my_dict[i[0]]=count 
+        my_dict[i[0]]=count
+        count=0 
       print(my_dict)
-      if 1 in my_dict.keys():
+      #print(new_ret)
+      if 3 in my_dict.keys():
         print("Buoy is floating")
-      elif (9 in my_dict.keys() and (10 in my_dict.keys() or 11 in my_dict.keys())):
+      elif (11 in my_dict.keys() and (12 in my_dict.keys() or 13 in my_dict.keys())):
         print("Person is requesting help")
-      elif (9 in my_dict.keys() and 12 in my_dict.keys()):
+      elif (11 in my_dict.keys() and 14 in my_dict.keys()):
         print("Person is riding jet ski")
-      elif (9 in my_dict.keys() and 13 in my_dict.keys()):
+      elif (11 in my_dict.keys() and 15 in my_dict.keys()):
         print("Person is surfing")
-      elif 9 in my_dict.keys():
+      elif 11 in my_dict.keys():
         print("Person is swimming")
-      elif (4 in my_dict.keys() and 14 in my_dict.keys()):   #TODO: Implement for other vehicles
-        for  i in my_dict[4]:
-          for m in new_ret.items():
-            #print(i[0])
-            for n in m[1]:
-              boxV=[n[0],n[1],n[2],n[3]]
-            
-              for j in my_dict[14]:
-                for k in new_ret.items():
-                  #print(i[0])
-                  for p in k[1]:
-                    boxP=[p[0],p[1],p[2],p[3]]
-                    if(iou(boxV,boxP)>0.6):
-                      count+=1
-              if count>8:
-                print("Suspicious Action: Boat has unusual human count")
+      elif (4 in my_dict.keys() and 2 in my_dict.keys()):   #TODO: Implement for other vehicles
+        print("Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
+        for k,s in new_ret.items():
+        #print(k,s)
+          if k==4:
+            for j in range(0,my_dict[4]):
+              Scount=0
+              boxV=[s[j][0],s[j][1],s[j][2],s[j][3]]
+              #print (boxV)
+              for p,m in new_ret.items():
+                #print(k,s)
+                if p==2:
+                    for i in range(0,my_dict[2]):
+                        boxP=[m[i][0],m[i][1],m[i][2],m[i][3]]
+                        #print (boxP)
+                        #print(iou(boxV,boxP))
+                        if(iou(boxV,boxP)>0 and iou(boxV,boxP)<1 ):        #####################################################
+                            a=iou(boxV,boxP)
+                            print(iou(boxV,boxP))
+                            Scount+=1
+
+              if Scount>0:
+                print(Scount,a,"Suspicious Action: Boat has unusual human count")
                 # Make alert notification to the security
-              
+              Scount=0
       
 if __name__ == '__main__':
   opt = opts().init()
