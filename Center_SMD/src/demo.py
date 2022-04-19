@@ -8,7 +8,7 @@ import _init_paths
 import os
 import cv2
 
-from opts import opts
+from opts_flir import opts_flir
 from detectors.detector_factory import detector_factory
 
 image_ext = ['jpg', 'jpeg', 'png', 'webp']
@@ -93,12 +93,12 @@ def demo(opt):
       dic_out = {x:y for x,y in ret['results'].items() if y.any()}
       #print(dic_out)
       #Removing the predicted scores<0.5 classes - ret is a value sorted dictionary so, y[0] has the largest prediction score object of the class
-      new_ret = {x:y for x,y in dic_out.items() if y[0][4]>0.4}
+      new_ret = {x:y for x,y in dic_out.items() if y[0][4]>0.3}
       
       for k,s in new_ret.items():
         indx=[]
         for j in range(len(s)):
-          if s[j][-1]<0.5:
+          if s[j][-1]<0.3:
             indx.append(j)
         s=np.delete(s,indx,axis=0)
 
@@ -110,7 +110,7 @@ def demo(opt):
       for i in new_ret.items():
         #print(i[0])
         for j in i[1]:
-          if(j[4]>0.4):
+          if(j[4]>0.3):
             #print(j[4])
             count+=1
           #else:
@@ -120,44 +120,61 @@ def demo(opt):
         count=0 
       print(my_dict)
       #print(new_ret)
-      if 3 in my_dict.keys():
+      if 13 in my_dict.keys():
         print("Buoy is floating")
-      elif (11 in my_dict.keys() and (12 in my_dict.keys() or 13 in my_dict.keys())):
-        print("Person is requesting help")
-      elif (11 in my_dict.keys() and 14 in my_dict.keys()):
-        print("Person is riding jet ski")
-      elif (11 in my_dict.keys() and 15 in my_dict.keys()):
-        print("Person is surfing")
-      elif 11 in my_dict.keys():
-        print("Person is swimming")
-      elif (4 in my_dict.keys() and 2 in my_dict.keys()):   #TODO: Implement for other vehicles
-        print("Hiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii")
+      if (6 in my_dict.keys() and (8 in my_dict.keys() or 9 in my_dict.keys())):
+        print("Help Requesting")
+      if ( (10 in my_dict.keys() and 6 in my_dict.keys()) or 10 in my_dict.keys()):
+        print("Jet-Skiing")
+      if (5 in my_dict.keys() and (6 in my_dict.keys() or 14 in my_dict.keys()or 7 in my_dict.keys())):
+        for k,s in new_ret.items():
+          if k==5:
+            for j in range(0,my_dict[5]):
+              #print(j)
+              boxV=[s[j][0],s[j][1],s[j][2],s[j][3]]
+              #print (boxV)
+              for p,m in new_ret.items():
+                #print(k,s)
+                if p==7 or p==14 or p==6:
+                    for i in range(0,my_dict[p]):
+                        boxP=[m[i][0],m[i][1],m[i][2],m[i][3]]
+                        #print (boxP)
+                        #print(iou(boxV,boxP))
+                        if(iou(boxV,boxP)>0 and iou(boxV,boxP)<=1 ):        #####################################################
+                            a=iou(boxV,boxP)
+                            #print(iou(boxV,boxP))
+                            #Scount+=1
+                            print("Surfing")
+      if 6 in my_dict.keys():
+        print("Swimming")
+      if (14 in my_dict.keys() and 3 in my_dict.keys()):   #TODO: Implement for other vehicles, this code is for kayak(our dataset only have that #vessel)
         for k,s in new_ret.items():
         #print(k,s)
-          if k==4:
-            for j in range(0,my_dict[4]):
+          if k==3:
+            for j in range(0,my_dict[3]):
               Scount=0
               boxV=[s[j][0],s[j][1],s[j][2],s[j][3]]
               #print (boxV)
               for p,m in new_ret.items():
                 #print(k,s)
-                if p==2:
-                    for i in range(0,my_dict[2]):
+                if p==14:
+                    for i in range(0,my_dict[14]):
                         boxP=[m[i][0],m[i][1],m[i][2],m[i][3]]
                         #print (boxP)
                         #print(iou(boxV,boxP))
                         if(iou(boxV,boxP)>0 and iou(boxV,boxP)<1 ):        #####################################################
                             a=iou(boxV,boxP)
-                            print(iou(boxV,boxP))
+                            #print(iou(boxV,boxP))
                             Scount+=1
 
               if Scount>0:
-                print(Scount,a,"Suspicious Action: Boat has unusual human count")
+                print("Human count in Kayak is :" + str(Scount)+ "  >>>>>  If the count is suspicious make an alert on security")
+                
                 # Make alert notification to the security
               Scount=0
       
 if __name__ == '__main__':
-  opt = opts().init()
+  opt = opts_flir().init()
 
 
   debugdir = 'demo/'+ opt.demo.split('.')[0].split('/')[-1]
